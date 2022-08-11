@@ -6,12 +6,12 @@ func TestWorker(t *testing.T) {
 	test := []*Worker{
 		{
 			Address:     []string{"https://example1.com", "https://example2.com"},
-			ProxyPath:   "test/proxy.txt",
+			ProxyPath:   "test/Proxy.txt",
 			NumOfWorker: 3,
 		},
 		{
 			Address:     []string{},
-			ProxyPath:   "test/proxy.txt",
+			ProxyPath:   "test/Proxy.txt",
 			NumOfWorker: 3,
 		},
 		{
@@ -21,12 +21,12 @@ func TestWorker(t *testing.T) {
 		},
 		{
 			Address:     []string{"https://example1.com", "https://example2.com"},
-			ProxyPath:   "test/proxy.txt",
+			ProxyPath:   "test/Proxy.txt",
 			NumOfWorker: 5,
 		},
 		{
 			Address:     []string{"https://example1.com", "https://example2.com"},
-			ProxyPath:   "test/proxy.txt",
+			ProxyPath:   "test/Proxy.txt",
 			NumOfWorker: 0,
 		},
 	}

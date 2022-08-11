@@ -14,7 +14,11 @@ func newQueue(proxyList []string) *queue {
 	}
 }
 
-func (q *queue) pop(proxy string) {
+func (q *queue) getProxy() string {
+	return q.pop(q.proxyList[0])
+}
+
+func (q *queue) pop(proxy string) string {
 	q.lk.Lock()
 	defer q.lk.Unlock()
 	for i, v := range q.proxyList {
@@ -24,4 +28,5 @@ func (q *queue) pop(proxy string) {
 			break
 		}
 	}
+	return proxy
 }

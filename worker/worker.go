@@ -5,24 +5,49 @@ import (
 	"github.com/Ja7ad/selenium/errors"
 	"log"
 	"os"
+	"sync"
 )
 
 type Worker struct {
-	Address     []string
-	ProxyPath   string
-	NumOfWorker uint
-	proxyList   []string
+	Address            []string
+	ProxyPath          string
+	NumOfWorker        int
+	SeleniumServerPath string
+	ChromeDriverPath   string
+	debug              bool
+	proxyList          []string
 }
 
-func NewWorker(address []string, proxyPath string, worker uint) *Worker {
+func NewWorker(address []string, proxyPath, seleniumServerPath, chromeDriverPath string, worker int, debug bool) *Worker {
 	return &Worker{
-		Address:     address,
-		ProxyPath:   proxyPath,
-		NumOfWorker: worker,
+		Address:            address,
+		ProxyPath:          proxyPath,
+		NumOfWorker:        worker,
+		SeleniumServerPath: seleniumServerPath,
+		ChromeDriverPath:   chromeDriverPath,
+		debug:              debug,
 	}
 }
 
-func (w *Worker) Start() error {
+func (w *Worker) Start() (chan Result, error) {
+	if err := w.validate(); err != nil {
+		return nil, err
+	}
+	return w.viewTarget(), nil
+}
+
+func (w *Worker) viewTarget() chan Result {
+	wg := &sync.WaitGroup{}
+	result := make(chan Result)
+	wg.Add(len(w.Address))
+	for i := 0; i < len(w.Address); i++ {
+		go startView(w.Address[i], w.proxyList, w.NumOfWorker, w.SeleniumServerPath, w.ChromeDriverPath, w.debug, result, wg)
+	}
+	wg.Wait()
+	return result
+}
+
+func (w *Worker) validate() error {
 	if err := w.checkAddress(); err != nil {
 		return err
 	}
@@ -65,7 +90,7 @@ func (w *Worker) setProxyListFromFile() error {
 	if err := scanner.Err(); err != nil {
 		return err
 	}
-	log.Println("the proxy number is limited to 50 and has been loaded")
+	log.Println("the Proxy number is limited to 50 and has been loaded")
 	return nil
 }
 
