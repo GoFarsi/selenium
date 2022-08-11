@@ -22,7 +22,7 @@ type Result struct {
 func startView(target string, proxyList []string, numOfWorker int, seleniumServerPath, driverPath string, debug bool, result chan<- Result, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for i := 0; i < len(proxyList)/numOfWorker; i++ {
-		ctx, _ := context.WithTimeout(context.Background(), 1*time.Second)
+		ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
 		queue := newQueue(proxyList)
 		wgWorker := &sync.WaitGroup{}
 		wgWorker.Add(numOfWorker)
@@ -43,14 +43,13 @@ func startDriver(ctx context.Context, workerId int, target string, proxy string,
 	default:
 	}
 	opts := []selenium.ServiceOption{
-		selenium.StartFrameBuffer(),
 		selenium.ChromeDriver(driverPath),
 	}
 	if debug {
 		selenium.SetDebug(true)
 		opts = append(opts, selenium.Output(os.Stdout))
 	} else {
-		opts = append(opts, selenium.Output(nil))
+		opts = append(opts, selenium.Output(nil), selenium.StartFrameBuffer())
 	}
 	port, err := getFreePort()
 	if err != nil {
@@ -76,6 +75,7 @@ func startDriver(ctx context.Context, workerId int, target string, proxy string,
 		return Result{target, proxy, "", workerId, err}
 	}
 	title, err := wd.Title()
+	time.Sleep(20 * time.Second)
 	return Result{target, proxy, title, workerId, err}
 }
 
