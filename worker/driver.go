@@ -1,19 +1,18 @@
 package worker
 
 import (
+	"context"
 	"fmt"
 	"github.com/tebeka/selenium"
 	"os"
-	"time"
 )
 
-const (
-	seleniumServerPath = "/home/user/Project/go/Personal/selenium/download/selenium-server.jar"
-	driverPath         = "/home/user/Project/go/Personal/selenium/download/chromedriver"
-	port               = 8080
-)
+type result struct {
+	title string
+	err   error
+}
 
-func startDriver(target string, proxy string) error {
+func startDriver(ctx context.Context, target string, proxy string, seleniumServerPath, driverPath string, port int, res chan result) {
 	opts := []selenium.ServiceOption{
 		selenium.StartFrameBuffer(),
 		selenium.ChromeDriver(driverPath),
@@ -21,7 +20,7 @@ func startDriver(target string, proxy string) error {
 	}
 	service, err := selenium.NewSeleniumService(seleniumServerPath, port, opts...)
 	if err != nil {
-		return err
+		res <- result{"", err}
 	}
 	defer service.Stop()
 	caps := selenium.Capabilities{"browserName": "chrome"}
@@ -31,16 +30,22 @@ func startDriver(target string, proxy string) error {
 	})
 	wd, err := selenium.NewRemote(caps, fmt.Sprintf("http://localhost:%d/wd/hub", port))
 	if err != nil {
-		return err
+		res <- result{"", err}
 	}
 	defer wd.Quit()
 	if err := wd.Get(target); err != nil {
-		return err
+		res <- result{"", err}
 	}
-	if err := wd.WaitWithTimeout(func(wd selenium.WebDriver) (bool, error) {
-		return false, nil
-	}, 3*time.Second); err != nil {
-		return err
+	title, err := wd.Title()
+	res <- result{title, err}
+
+	for {
+		select {
+		case <-ctx.Done():
+			res <- result{"", ctx.Err()}
+			return
+		case <-res:
+		}
 	}
-	return nil
+
 }
