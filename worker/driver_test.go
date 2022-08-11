@@ -2,6 +2,7 @@ package worker
 
 import (
 	"context"
+	"sync"
 	"testing"
 	"time"
 )
@@ -21,9 +22,11 @@ func TestStartDriver(t *testing.T) {
 		{"https://www.coingecko.com/en/coins/feg-token-bsc", "41.65.236.44:1976", 8084},
 	}
 	res := make(chan result)
+	wg := &sync.WaitGroup{}
+	wg.Add(len(tests))
 	for _, tt := range tests {
 		ctx, _ := context.WithTimeout(context.Background(), 20*time.Second)
-		go startDriver(ctx, tt.Target, tt.Proxy, seleniumPath, chromePath, tt.DriverPort, res)
+		go startDriver(ctx, tt.Target, tt.Proxy, seleniumPath, chromePath, tt.DriverPort, res, wg)
 	}
 	for result := range res {
 		if result.err != nil {
@@ -32,5 +35,5 @@ func TestStartDriver(t *testing.T) {
 		t.Logf("target %v title %v viewed", result.target, result.title)
 	}
 	close(res)
-
+	wg.Wait()
 }

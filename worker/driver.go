@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/tebeka/selenium"
-	"os"
+	"sync"
 )
 
 type result struct {
@@ -13,11 +13,12 @@ type result struct {
 	err    error
 }
 
-func startDriver(ctx context.Context, target string, proxy string, seleniumServerPath, driverPath string, port int, res chan result) {
+func startDriver(ctx context.Context, target string, proxy string, seleniumServerPath, driverPath string, port int, res chan result, wg *sync.WaitGroup) {
+	defer wg.Done()
 	opts := []selenium.ServiceOption{
 		selenium.StartFrameBuffer(),
 		selenium.ChromeDriver(driverPath),
-		selenium.Output(os.Stderr),
+		selenium.Output(nil),
 	}
 	service, err := selenium.NewSeleniumService(seleniumServerPath, port, opts...)
 	if err != nil {
