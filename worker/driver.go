@@ -8,8 +8,9 @@ import (
 )
 
 type result struct {
-	title string
-	err   error
+	target string
+	title  string
+	err    error
 }
 
 func startDriver(ctx context.Context, target string, proxy string, seleniumServerPath, driverPath string, port int, res chan result) {
@@ -20,7 +21,7 @@ func startDriver(ctx context.Context, target string, proxy string, seleniumServe
 	}
 	service, err := selenium.NewSeleniumService(seleniumServerPath, port, opts...)
 	if err != nil {
-		res <- result{"", err}
+		res <- result{target, "", err}
 	}
 	defer service.Stop()
 	caps := selenium.Capabilities{"browserName": "chrome"}
@@ -30,20 +31,19 @@ func startDriver(ctx context.Context, target string, proxy string, seleniumServe
 	})
 	wd, err := selenium.NewRemote(caps, fmt.Sprintf("http://localhost:%d/wd/hub", port))
 	if err != nil {
-		res <- result{"", err}
+		res <- result{target, "", err}
 	}
 	defer wd.Quit()
 	if err := wd.Get(target); err != nil {
-		res <- result{"", err}
+		res <- result{target, "", err}
 	}
 	title, err := wd.Title()
-	res <- result{title, err}
+	res <- result{target, title, err}
 
 	for {
 		select {
 		case <-ctx.Done():
-			res <- result{"", ctx.Err()}
-			return
+			res <- result{target, "", ctx.Err()}
 		case <-res:
 		}
 	}

@@ -27,10 +27,10 @@ func TestStartDriver(t *testing.T) {
 	}
 	for result := range res {
 		if result.err != nil {
-			t.Error(result.err)
-			break
+			t.Fatalf("target %v get error %v", result.target, result.err)
 		}
-		t.Logf("title %v viewed", result.title)
+		t.Logf("target %v title %v viewed", result.target, result.title)
 	}
 	close(res)
+
 }
